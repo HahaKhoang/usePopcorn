@@ -7,7 +7,7 @@ const average = (arr) =>
 const KEY = "ac46e2c";
 
 export default function App() {
-  const [query, setQuery] = useState("nightmare");
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +29,7 @@ export default function App() {
   function handleDeleteWatched(id) {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
+
   useEffect(
     function () {
       const controller = new AbortController();
@@ -49,8 +50,10 @@ export default function App() {
           setMovies(data.Search);
           setError("");
         } catch (error) {
-          // console.error(error.message);
-          if (error.name !== "AbortError") setError(error.message);
+          if (error.name !== "AbortError") {
+            console.error(error.message);
+            setError(error.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -60,7 +63,7 @@ export default function App() {
         setError("");
         return;
       }
-
+      handleCloseMovie();
       fetchMovies();
       return function () {
         controller.abort();
@@ -258,6 +261,22 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   useEffect(
     function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
+
+  useEffect(
+    function () {
       async function getMovieDetails() {
         setIsLoading(true);
         const response = await fetch(
@@ -278,7 +297,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       document.title = `Movie | ${title}`;
       return function () {
         document.title = "usePopcorn";
-        console.log(`Clean up effect for movie ${title}`);
+        // console.log(`Clean up effect for movie ${title}`);
       };
     },
     [title]
